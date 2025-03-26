@@ -10,12 +10,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet">
     <style>
         body {
-            @apply bg-gray-900 flex justify-center items-center min-h-screen;
             font-family: 'Fira Code', monospace;
         }
 
         .mac-terminal {
-            @apply bg-gray-800 rounded-xl shadow-2xl w-full max-w-3xl;
+            max-width: 100%;
+            width: 100%;
+            height: auto;
         }
 
         .mac-header {
@@ -39,25 +40,36 @@
         }
 
         .xterm {
-            padding-top: 1.5rem !important;
-            padding-left: 1rem;
+            padding: 1.5rem 1rem;
+            overflow-x: auto;
         }
     </style>
 </head>
 
-<body>
-    <div class="mac-terminal">
+<body class="bg-gray-900 flex items-center justify-center min-h-screen p-4">
+
+    <div class="mac-terminal bg-gray-800 rounded-xl shadow-2xl w-full max-w-3xl">
         <div class="mac-header">
             <div class="circle red"></div>
             <div class="circle yellow"></div>
             <div class="circle green"></div>
             <span class="ml-4 text-sm text-white">terminal@macbook-pro ~</span>
         </div>
-        <div id="terminal-container" class="h-[400px]"></div>
+        <div id="terminal-container" class="h-[60vh] min-h-[320px] max-h-[80vh]"></div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/xterm/lib/xterm.js"></script>
     <script>
+        function calculateCols() {
+            const container = document.getElementById('terminal-container');
+            const containerWidth = container.offsetWidth;
+            const fontSize = 8; // ajusté à la taille réelle de Fira Code en pixels approx
+            const padding = 32; // compte le padding interne
+            return Math.floor((containerWidth - padding) / (fontSize * 0.6));
+        }
+
+        const cols = calculateCols();
+
         const terminal = new Terminal({
             cursorBlink: true,
             fontFamily: "Fira Code",
@@ -67,148 +79,11 @@
                 foreground: "#10B981",
             },
             rows: 20,
-            cols: 80
+            cols: cols
         });
 
         terminal.open(document.getElementById("terminal-container"));
         terminal.focus();
-
-        let dateNaissance = "";
-        let tentatives = 0;
-        const maxTentatives = 3;
-        let writing = false;
-
-        const asciiArt = [
-            "  _      _   _   _   _   _    _   ",
-            " | |    (_) | | | | | | | |  | |  ",
-            " | |     _  | | | | | |_| |  | |  ",
-            " | |    | | | | | | |  _  |  | |  ",
-            " | |____| | | |_| | | | | |  |_|  ",
-            " |______|_|  \\___/  \\_| |_/  (_)  ",
-            "",
-            "           🎂   🎉   🎂   🎉   ",
-            "        ┌────────────────────┐",
-            "        │  Joyeux Anniversaire Ludic ! │",
-            "        └────────────────────┘",
-            "            |     |     |",
-            "           [=]   [=]   [=]",
-            "         __|__ __|__ __|__",
-            "        |____||____||____|",
-            "",
-        ];
-
-        const astroInfo = [
-            "",
-            "🔮 Signe astrologique : **BÉLIER** (21 mars - 19 avril)",
-            "",
-            "Traits :",
-            " - 🔥 Énergique et passionné",
-            " - 🥇 Leader naturel, fonceur",
-            " - 💡 Toujours plein d'idées",
-            " - 😄 Ludic = Bélier = Gagne toujours",
-            "",
-            "Conseil du jour : Code comme un Bélier 🐏",
-        ];
-
-        const helpInfo = [
-            "",
-            "📜 Liste des commandes disponibles :",
-            "",
-            " - help   → Affiche cette liste",
-            " - astro  → Affiche ton profil astrologique 🔮",
-            " - clear  → Nettoie l'écran",
-            " - exit   → Ferme le terminal",
-            ""
-        ];
-
-        function writeLines(lines, delay = 100, callback = () => { }) {
-            writing = true;
-            let i = 0;
-            const interval = setInterval(() => {
-                if (i < lines.length) {
-                    terminal.writeln(lines[i]);
-                    i++;
-                } else {
-                    clearInterval(interval);
-                    writing = false;
-                    callback();
-                }
-            }, delay);
-        }
-
-        function prompt() {
-            terminal.write('\r\n\u001b[1;32mBorz@leloup-pro\u001b[0m:\u001b[34m~\u001b[0m$ ');
-        }
-
-        function handleCommand(command) {
-            switch (command.trim().toLowerCase()) {
-                case "help":
-                    writeLines(helpInfo, 50, prompt);
-                    break;
-                case "astro":
-                    writeLines(astroInfo, 70, prompt);
-                    break;
-                case "clear":
-                    terminal.clear();
-                    prompt();
-                    break;
-                case "exit":
-                    terminal.writeln("👋 Au revoir Ludic !");
-                    terminal.blur();
-                    break;
-                default:
-                    terminal.writeln(`Commande inconnue: ${command}`);
-                    prompt();
-            }
-        }
-
-        writeLines([
-            "Bienvenue dans le terminal 🎉",
-            "Tape ta date de naissance au format JJ-MM-AAAA puis appuie sur Entrée :"
-        ], 80, prompt);
-
-        let inputBuffer = "";
-
-        terminal.onData(char => {
-            if (writing) return;
-
-            if (char === '\r') {
-                terminal.write('\r\n');
-                if (!dateNaissance) {
-                    if (inputBuffer === "27-03-2001") {
-                        dateNaissance = inputBuffer;
-                        writeLines([
-                            "",
-                            "🔐 Vérification réussie...",
-                            "Chargement de la surprise en cours...",
-                            ""
-                        ], 100, () => {
-                            writeLines(asciiArt, 60, prompt);
-                        });
-                    } else {
-                        tentatives++;
-                        if (tentatives >= maxTentatives) {
-                            terminal.writeln("⛔ Trop de tentatives. Réessaie plus tard.");
-                            terminal.blur();
-                        } else {
-                            terminal.writeln(`❌ Mauvaise date ! Il te reste ${maxTentatives - tentatives} tentative(s).`);
-                            prompt();
-                        }
-                    }
-                } else {
-                    handleCommand(inputBuffer);
-                }
-                inputBuffer = "";
-            } else if (char === '\u007F') {
-                if (inputBuffer.length > 0) {
-                    inputBuffer = inputBuffer.slice(0, -1);
-                    terminal.write('\b \b');
-                }
-            } else {
-                inputBuffer += char;
-                terminal.write(char);
-            }
-        });
 
     </script>
 </body>
